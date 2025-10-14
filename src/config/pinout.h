@@ -1,0 +1,1 @@
+#define BOARD_BACKLIGHT_PIN 23 // P0.23 - PWM for backlight
