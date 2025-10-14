@@ -37,3 +37,55 @@ spi_init(nrfx_spim_config_t const *p_spi_config)
 
     return err_code == NRFX_SUCCESS ? 0 : -1;
 }
+
+int8_t
+spi_write(const uint8_t *data, uint16_t data_len)
+{
+    ret_code_t                  err_state      = 0;
+    nrfx_spim_xfer_desc_t const spim_xfer_desc = {
+        .p_tx_buffer = data,
+        .tx_length   = data_len,
+        .p_rx_buffer = NULL,
+        .rx_length   = 0,
+    };
+
+    spi_xfer_done = false;
+    err_state     = nrfx_spim_xfer(&SPI_INSTANCE, &spim_xfer_desc, 0);
+    if (err_state != 0)
+    {
+        NRF_LOG_ERROR("SPI TX transfer failed: %d", err_state);
+        return -1;
+    }
+    while (!spi_xfer_done)
+    {
+        __WFE();
+    }
+    return 0;
+}
+
+int8_t
+spi_read(uint8_t *data, uint16_t data_len)
+{
+    ret_code_t err_state = 0;
+
+    nrfx_spim_xfer_desc_t const spim_xfer_desc = {
+        .p_tx_buffer = NULL,
+        .tx_length   = 0,
+        .p_rx_buffer = data,
+        .rx_length   = data_len,
+    };
+
+    spi_xfer_done = false;
+    err_state     = nrfx_spim_xfer(&SPI_INSTANCE, &spim_xfer_desc, 0);
+    if (err_state != 0)
+    {
+        NRF_LOG_ERROR("SPI RX transfer failed: %d", err_state);
+        return -1;
+    }
+    while (!spi_xfer_done) // TODO add timeout
+    {
+        __WFE();
+    }
+
+    return 0;
+}

@@ -23,7 +23,11 @@
 extern "C" {
 #endif
 
+#define NRF_SPI_MAX_TX_RX_SIZE 0xffff // 0xffff /**< Maximus size of spi buffer to write / write */
+
 int8_t spi_init(nrfx_spim_config_t const *p_spi_config);
+int8_t spi_write(const uint8_t *data, uint16_t data_len);
+int8_t spi_read(uint8_t *data, uint16_t data_len);
 
 #ifdef __cplusplus
 }

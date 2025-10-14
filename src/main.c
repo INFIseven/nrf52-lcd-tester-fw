@@ -1,12 +1,11 @@
 #include "SEGGER_RTT.h"
 #include "pinout.h"
 #include "app_error.h"
-#include "app_util_platform.h"
 #include "app_pwm.h"
 #include "include/spi.h"
 #include "nrf_delay.h"
 #include "nrf_drv_timer.h"
-#include "nrf_drv_spi.h"
+#include "nrf_gpio.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
@@ -28,6 +27,7 @@
 #define ST7789_CHIP_UNSELECT(gpio_pin) nrf_gpio_pin_set(gpio_pin)
 #define ST7789_DC_SET(gpio_pin)        nrf_gpio_pin_set(gpio_pin)
 #define ST7789_DC_CLEAR(gpio_pin)      nrf_gpio_pin_clear(gpio_pin)
+#define ST7789_WAIT(wait_ms)           nrf_delay_ms(wait_ms);
 
 const nrf_drv_timer_t LVGL_TIMER = NRF_DRV_TIMER_INSTANCE(0);
 
@@ -52,13 +52,32 @@ static const nrfx_spim_config_t SPI_CONFIG = {
 static void
 my_lcd_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, const uint8_t *param, size_t param_size)
 {
-    NRF_LOG_INFO("cmd");
+    if (cmd_size)
+    {
+        ST7789_DC_CLEAR(BOARD_LCD_DC_PIN);
+        spi_write(cmd, cmd_size);
+    }
+    if (param_size)
+    {
+        ST7789_DC_SET(BOARD_LCD_DC_PIN);
+        spi_write(param, param_size);
+    }
 }
 
 static void
 my_lcd_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, uint8_t *param, size_t param_size)
 {
-    NRF_LOG_INFO("color");
+    if (cmd_size)
+    {
+        ST7789_DC_CLEAR(BOARD_LCD_DC_PIN);
+        spi_write(cmd, cmd_size);
+    }
+    if (param_size)
+    {
+        ST7789_DC_SET(BOARD_LCD_DC_PIN);
+        spi_write(param, param_size);
+    }
+    lv_display_flush_ready(disp);
 }
 
 static void
@@ -94,6 +113,20 @@ board_setup_timer(void)
     nrf_drv_timer_enable(&LVGL_TIMER);
 }
 
+static void
+board_setup_gpios(void)
+{
+    nrf_gpio_cfg_output(BOARD_LCD_DC_PIN);
+    nrf_gpio_cfg_output(BOARD_LCD_RST_PIN);
+
+    ST7789_RESET_SET(BOARD_LCD_RST_PIN);
+    ST7789_WAIT(150);
+    ST7789_RESET_CLEAR(BOARD_LCD_RST_PIN);
+    ST7789_WAIT(150);
+    ST7789_RESET_SET(BOARD_LCD_RST_PIN);
+    ST7789_WAIT(150);
+}
+
 int
 main(void)
 {
@@ -121,7 +154,13 @@ main(void)
 
     /// Initialize timer
     NRF_LOG_INFO("Initializing timer...");
+    NRF_LOG_FLUSH();
     board_setup_timer();
+
+    /// Setup GPIOs
+    NRF_LOG_INFO("Setting up GPIOs...");
+    NRF_LOG_FLUSH();
+    board_setup_gpios();
 
     /// Initialize LVGL
     NRF_LOG_INFO("Initializing LVGL...");
@@ -132,14 +171,15 @@ main(void)
     /* Set display buffer for display `display1`. */
     lv_display_set_buffers(disp, buf1, NULL, sizeof(buf1), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
-    // /*Change the active screen's background color*/
-    // lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
+    /*Change the active screen's background color*/
+    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
 
-    // /*Create a white label, set its text and align it to the center*/
-    // lv_obj_t *label = lv_label_create(lv_screen_active());
-    // lv_label_set_text(label, "Hello world");
-    // lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
-    // lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    /*Create a white label, set its text and align it to the center*/
+    lv_obj_t *label = lv_label_create(lv_screen_active());
+    lv_label_set_text(label, "Hello world");
+    lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    lv_scr_load_anim(lv_screen_active(), LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 
     NRF_LOG_INFO("Starting main loop...");
     NRF_LOG_FLUSH();
