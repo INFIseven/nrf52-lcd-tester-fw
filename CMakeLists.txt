@@ -87,7 +87,9 @@ set(COMPILE_DEFINITIONS
 )
 
 # Build type specific flags
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Configuring for Debug build")
     list(APPEND MY_COMPILER_FLAGS
     "-O0"
     "-g3"
@@ -98,6 +100,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     "-fomit-frame-pointer -fno-dwarf2-cfi-asm -ffunction-sections -fdata-sections -fshort-enums -fno-common"
     )
 else()
+    message(STATUS "Configuring for Release build")
     list(APPEND MY_COMPILER_FLAGS
     "-O2"
     "-g3"
@@ -106,8 +109,8 @@ else()
 endif()
 
 # Convert lists to strings
-string(REPLACE ";" " " CMAKE_C_FLAGS "${COMMON_FLAGS}")
-string(REPLACE ";" " " CMAKE_ASM_FLAGS "${COMMON_FLAGS}")
+string(REPLACE ";" " " CMAKE_C_FLAGS "${COMMON_FLAGS};${MY_COMPILER_FLAGS}")
+string(REPLACE ";" " " CMAKE_ASM_FLAGS "${COMMON_FLAGS};${MY_COMPILER_FLAGS}")
 string(REPLACE ";" " " COMPILE_DEFINITIONS_STR "${COMPILE_DEFINITIONS}")
 
 # Add compile definitions
@@ -181,50 +184,14 @@ set(NRF_SDK_INCLUDE_DIRS
 set(NRF_SDK_SRCS
     "${NRF_SDK_PATH}/modules/nrfx/mdk/gcc_startup_nrf52840.S"
     "${NRF_SDK_PATH}/modules/nrfx/mdk/system_nrf52840.c"
-    "${NRF_SDK_PATH}/components/libraries/sensorsim/sensorsim.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_aead.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_aes.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_aes_shared.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_ecc.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_ecdh.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_ecdsa.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_eddsa.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_error.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_hash.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_hkdf.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_hmac.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_init.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_rng.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/nrf_crypto_shared.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/nrf_hw/nrf_hw_backend_init.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/nrf_hw/nrf_hw_backend_rng.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/nrf_hw/nrf_hw_backend_rng_mbedtls.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_chacha_poly_aead.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_ecc.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_ecdh.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_ecdsa.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_eddsa.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_hash.c"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon/oberon_backend_hmac.c"
-    "${NRF_SDK_PATH}/integration/nrfx/legacy/nrf_drv_clock.c"
-    "${NRF_SDK_PATH}/integration/nrfx/legacy/nrf_drv_rng.c"
     "${NRF_SDK_PATH}/integration/nrfx/legacy/nrf_drv_spi.c"
     "${NRF_SDK_PATH}/integration/nrfx/legacy/nrf_drv_ppi.c"
-    # "${NRF_SDK_PATH}/integration/nrfx/legacy/nrf_drv_twi.c"
-    # "${NRF_SDK_PATH}/integration/nrfx/legacy/nrf_drv_uart.c"
-    # "${NRF_SDK_PATH}/components/libraries/queue/nrf_queue.c"
     "${NRF_SDK_PATH}/modules/nrfx/soc/nrfx_atomic.c"
-    # "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_clock.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_gpiote.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/prs/nrfx_prs.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_pwm.c"
-    "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_saadc.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_spi.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_spim.c"
-    "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_twi.c"
-    "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_twim.c"
-    "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_uart.c"
-    "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_uarte.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_rtc.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_ppi.c"
     "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_timer.c"
@@ -232,38 +199,23 @@ set(NRF_SDK_SRCS
     "${NRF_SDK_PATH}/components/libraries/util/app_error_handler_gcc.c"
     "${NRF_SDK_PATH}/components/libraries/util/app_error_weak.c"
     "${NRF_SDK_PATH}/components/libraries/pwm/app_pwm.c"
-    # "${NRF_SDK_PATH}/components/libraries/button/app_button.c"
-    # "${NRF_SDK_PATH}/components/libraries/scheduler/app_scheduler.c"
-    # "${NRF_SDK_PATH}/components/libraries/timer/drv_rtc.c"
     "${NRF_SDK_PATH}/components/libraries/util/app_util_platform.c"
-    "${NRF_SDK_PATH}/components/libraries/fds/fds.c"
     "${NRF_SDK_PATH}/components/libraries/util/nrf_assert.c"
     "${NRF_SDK_PATH}/components/libraries/atomic_flags/nrf_atflags.c"
     "${NRF_SDK_PATH}/components/libraries/atomic/nrf_atomic.c"
     "${NRF_SDK_PATH}/components/libraries/balloc/nrf_balloc.c"
     "${NRF_SDK_PATH}/external/fprintf/nrf_fprintf.c"
     "${NRF_SDK_PATH}/external/fprintf/nrf_fprintf_format.c"
-    "${NRF_SDK_PATH}/components/libraries/fstorage/nrf_fstorage.c"
-    "${NRF_SDK_PATH}/components/libraries/fstorage/nrf_fstorage_nvmc.c"
-    "${NRF_SDK_PATH}/components/libraries/fstorage/nrf_fstorage_sd.c"
     "${NRF_SDK_PATH}/components/libraries/memobj/nrf_memobj.c"
     "${NRF_SDK_PATH}/components/libraries/ringbuf/nrf_ringbuf.c"
-    "${NRF_SDK_PATH}/components/libraries/experimental_section_vars/nrf_section_iter.c"
-    "${NRF_SDK_PATH}/components/libraries/sortlist/nrf_sortlist.c"
     "${NRF_SDK_PATH}/components/libraries/strerror/nrf_strerror.c"
-    "${NRF_SDK_PATH}/modules/nrfx/drivers/src/nrfx_rng.c"
-    # "${NRF_SDK_PATH}/components/libraries/uart/retarget.c"
     "${NRF_SDK_PATH}/components/libraries/log/src/nrf_log_backend_rtt.c"
     "${NRF_SDK_PATH}/components/libraries/log/src/nrf_log_backend_serial.c"
-    # "${NRF_SDK_PATH}/components/libraries/log/src/nrf_log_backend_uart.c"
     "${NRF_SDK_PATH}/components/libraries/log/src/nrf_log_default_backends.c"
     "${NRF_SDK_PATH}/components/libraries/log/src/nrf_log_frontend.c"
     "${NRF_SDK_PATH}/components/libraries/log/src/nrf_log_str_formatter.c"
     "${NRF_SDK_PATH}/external/segger_rtt/SEGGER_RTT.c"
     "${NRF_SDK_PATH}/external/segger_rtt/SEGGER_RTT_printf.c"
-    "${NRF_SDK_PATH}/external/mbedtls/library/aes.c"
-    "${NRF_SDK_PATH}/external/mbedtls/library/ctr_drbg.c"
-    "${NRF_SDK_PATH}/external/mbedtls/library/platform_util.c"
 )
 
 # LVGL configuration
