@@ -13,6 +13,7 @@ set(ARM_GCC_PATH "" CACHE STRING "Path to ARM GCC toolchain")
 set(MCU_TYPE "NRF52840" CACHE STRING "MCU type (default: NRF52840)")
 set(NRF_SDK_PATH "" CACHE STRING "Path to nRF SDK")
 set(LVGL_PATH "" CACHE STRING "Path to LVGL library")
+set(IMAGES_PATH "${CMAKE_SOURCE_DIR}/src/images" CACHE STRING "Path to images directory")
 
 # Validate required parameters
 if(ARM_GCC_PATH STREQUAL "")
@@ -124,7 +125,20 @@ string(REPLACE ";" " " COMPILE_DEFINITIONS_STR "${COMPILE_DEFINITIONS}")
 add_definitions(${COMPILE_DEFINITIONS})
 
 # Include image sources
-add_subdirectory(src/images)
+if(EXISTS ${IMAGES_PATH})
+    # Check if there's a CMakeLists.txt in the images directory
+    if(EXISTS ${IMAGES_PATH}/CMakeLists.txt)
+        add_subdirectory(${IMAGES_PATH} images)
+    else()
+        # If no CMakeLists.txt, collect .c files directly
+        file(GLOB IMAGE_SRCS "${IMAGES_PATH}/*.c")
+        message(STATUS "Found image files: ${IMAGE_SRCS}")
+    endif()
+    message(STATUS "Using images from: ${IMAGES_PATH}")
+else()
+    message(WARNING "Images directory not found at: ${IMAGES_PATH}")
+    set(IMAGE_SRCS "")
+endif()
 
 # Source files
 set(PROJECT_SRCS
