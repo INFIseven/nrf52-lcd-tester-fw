@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 3.7)
 # Create compile_commands.json for clang
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) 
+set(CONFIG_LV_BUILD_DEMOS OFF) # for demos
+set(CONFIG_LV_BUILD_EXAMPLES OFF) # for examples
+set(CONFIG_LV_USE_THORVG_INTERNAL OFF) # for ThorVG
+
 # Input parameters
 set(ARM_GCC_PATH "" CACHE STRING "Path to ARM GCC toolchain")
 set(MCU_TYPE "NRF52840" CACHE STRING "MCU type (default: NRF52840)")
@@ -84,6 +89,8 @@ set(COMPILE_DEFINITIONS
   "-DHPR_DISP_VEN_TQ"
   "-D__HEAP_SIZE__=32768"
   "-D__GNU_LINKER"
+#   "-DLV_CONF_BUILD_DISABLE_DEMOS=0"
+#   "-DLV_CONF_BUILD_DISABLE_EXAMPLES=0"
 )
 
 # Build type specific flags
@@ -116,11 +123,16 @@ string(REPLACE ";" " " COMPILE_DEFINITIONS_STR "${COMPILE_DEFINITIONS}")
 # Add compile definitions
 add_definitions(${COMPILE_DEFINITIONS})
 
+# Include image sources
+add_subdirectory(src/images)
+
 # Source files
 set(PROJECT_SRCS
     src/main.c
     src/spi.c
+    src/display.c
     src/syscalls.c
+    ${IMAGE_SRCS}
 )
 
 # nRF SDK include directories (simplified)
@@ -130,16 +142,6 @@ set(NRF_SDK_INCLUDE_DIRS
     "${NRF_SDK_PATH}/components/libraries/atomic_flags"
     "${NRF_SDK_PATH}/components/libraries/balloc"
     "${NRF_SDK_PATH}/components/libraries/button"
-    "${NRF_SDK_PATH}/components/libraries/crypto"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/cc310"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/cc310_bl"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/cifra"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/mbedtls"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/micro_ecc"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/nrf_hw"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/nrf_sw"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/oberon"
-    "${NRF_SDK_PATH}/components/libraries/crypto/backend/optiga"
     "${NRF_SDK_PATH}/components/libraries/stack_info"
     "${NRF_SDK_PATH}/components/libraries/queue"
     "${NRF_SDK_PATH}/components/libraries/delay"
@@ -269,10 +271,10 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O ihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
     COMMENT "Creating .hex file")
 
-# Create .bin file
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
-    COMMENT "Creating .bin file")
+# # Create .bin file
+# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#     COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
+#     COMMENT "Creating .bin file")
 
 # Print size
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

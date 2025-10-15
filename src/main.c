@@ -3,6 +3,7 @@
 #include "app_error.h"
 #include "app_pwm.h"
 #include "include/spi.h"
+#include "include/display.h"
 #include "nrf_delay.h"
 #include "nrf_drv_timer.h"
 #include "nrf_gpio.h"
@@ -10,31 +11,15 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include <string.h>
-#include "lvgl.h"
 
 #if !defined(DEBUG)
 #warning "Debug mode is not enabled!"
 #endif
 
-#define LVGL_LOOP_DELAY_MS 5
-#define MY_DISP_HOR_RES    170
-#define MY_DISP_VER_RES    320
-#define BYTES_PER_PIXEL    2 // RGB565
+static const nrf_drv_timer_t LVGL_TIMER = NRF_DRV_TIMER_INSTANCE(0);
 
-#define ST7789_RESET_CLEAR(gpio_pin)   nrf_gpio_pin_clear(gpio_pin) // TODO: dani brief what needed for function to link
-#define ST7789_RESET_SET(gpio_pin)     nrf_gpio_pin_set(gpio_pin)
-#define ST7789_CHIP_SELECT(gpio_pin)   nrf_gpio_pin_clear(gpio_pin)
-#define ST7789_CHIP_UNSELECT(gpio_pin) nrf_gpio_pin_set(gpio_pin)
-#define ST7789_DC_SET(gpio_pin)        nrf_gpio_pin_set(gpio_pin)
-#define ST7789_DC_CLEAR(gpio_pin)      nrf_gpio_pin_clear(gpio_pin)
-#define ST7789_WAIT(wait_ms)           nrf_delay_ms(wait_ms);
-
-const nrf_drv_timer_t LVGL_TIMER = NRF_DRV_TIMER_INSTANCE(0);
-
-#if 1
 APP_PWM_INSTANCE(PWM1, 1);       // Create the instance "PWM1" using TIMER1.
 static volatile bool ready_flag; // A flag indicating PWM status.
-#endif
 
 static const nrfx_spim_config_t SPI_CONFIG = {
     .sck_pin        = BOARD_SPI_SCK_PIN,
@@ -50,45 +35,13 @@ static const nrfx_spim_config_t SPI_CONFIG = {
 };
 
 static void
-my_lcd_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, const uint8_t *param, size_t param_size)
-{
-    if (cmd_size)
-    {
-        ST7789_DC_CLEAR(BOARD_LCD_DC_PIN);
-        spi_write(cmd, cmd_size);
-    }
-    if (param_size)
-    {
-        ST7789_DC_SET(BOARD_LCD_DC_PIN);
-        spi_write(param, param_size);
-    }
-}
-
-static void
-my_lcd_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, uint8_t *param, size_t param_size)
-{
-    if (cmd_size)
-    {
-        ST7789_DC_CLEAR(BOARD_LCD_DC_PIN);
-        spi_write(cmd, cmd_size);
-    }
-    if (param_size)
-    {
-        ST7789_DC_SET(BOARD_LCD_DC_PIN);
-        spi_write(param, param_size);
-    }
-    lv_display_flush_ready(disp);
-}
-
-static void
 LVGL_TIMER_event_handler(nrf_timer_event_t event_type, void *p_context)
 {
     switch (event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
-            lv_tick_inc(LVGL_LOOP_DELAY_MS);
+            display_ticks();
             break;
-
         default:
             // Do nothing.
             break;
@@ -118,13 +71,6 @@ board_setup_gpios(void)
 {
     nrf_gpio_cfg_output(BOARD_LCD_DC_PIN);
     nrf_gpio_cfg_output(BOARD_LCD_RST_PIN);
-
-    ST7789_RESET_SET(BOARD_LCD_RST_PIN);
-    ST7789_WAIT(150);
-    ST7789_RESET_CLEAR(BOARD_LCD_RST_PIN);
-    ST7789_WAIT(150);
-    ST7789_RESET_SET(BOARD_LCD_RST_PIN);
-    ST7789_WAIT(150);
 }
 
 int
@@ -137,20 +83,16 @@ main(void)
 
     SEGGER_RTT_Init();
 
-#if 1
     app_pwm_config_t pwm1_cfg = APP_PWM_DEFAULT_CONFIG_1CH(5000L, BOARD_BACKLIGHT_PIN);
     err_code                  = app_pwm_init(&PWM1, &pwm1_cfg, NULL);
     APP_ERROR_CHECK(err_code);
     app_pwm_enable(&PWM1);
     while (app_pwm_channel_duty_set(&PWM1, 0, 50) == NRF_ERROR_BUSY) {}
-#endif
 
-#if 1
     /// Initialize SPI
     NRF_LOG_INFO("Initializing SPI...");
     NRF_LOG_FLUSH();
     spi_init(&SPI_CONFIG);
-#endif
 
     /// Initialize timer
     NRF_LOG_INFO("Initializing timer...");
@@ -162,31 +104,15 @@ main(void)
     NRF_LOG_FLUSH();
     board_setup_gpios();
 
-    /// Initialize LVGL
-    NRF_LOG_INFO("Initializing LVGL...");
-    NRF_LOG_FLUSH();
-    lv_init();
-    lv_display_t  *disp = lv_st7789_create(MY_DISP_HOR_RES, MY_DISP_VER_RES, 0, my_lcd_send_cmd, my_lcd_send_color);
-    static uint8_t buf1[MY_DISP_HOR_RES * MY_DISP_VER_RES / 10 * BYTES_PER_PIXEL];
-    /* Set display buffer for display `display1`. */
-    lv_display_set_buffers(disp, buf1, NULL, sizeof(buf1), LV_DISPLAY_RENDER_MODE_PARTIAL);
-
-    /*Change the active screen's background color*/
-    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
-
-    /*Create a white label, set its text and align it to the center*/
-    lv_obj_t *label = lv_label_create(lv_screen_active());
-    lv_label_set_text(label, "Hello world");
-    lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-    lv_scr_load_anim(lv_screen_active(), LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+    /// Initialize Display
+    int res = display_init();
 
     NRF_LOG_INFO("Starting main loop...");
     NRF_LOG_FLUSH();
 
     while (1)
     {
-        lv_task_handler();
+        display_flush();
         NRF_LOG_FLUSH();
         __WFI();
     }

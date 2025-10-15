@@ -2,5 +2,6 @@
 .claude
 .vscode
 build
-spi
+images
 reference-CMakeLists.txt
+spi
