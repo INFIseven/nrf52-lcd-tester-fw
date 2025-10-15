@@ -12,7 +12,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "include/display.h"
 #include "include/spi.h"
-#include "images/generated_images.h"
+#include "generated_images.h"
 #include "pinout.h"
 #include "lvgl.h"
 #include "nrf_gpio.h"

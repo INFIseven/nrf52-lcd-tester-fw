@@ -90,8 +90,6 @@ set(COMPILE_DEFINITIONS
   "-DHPR_DISP_VEN_TQ"
   "-D__HEAP_SIZE__=32768"
   "-D__GNU_LINKER"
-#   "-DLV_CONF_BUILD_DISABLE_DEMOS=0"
-#   "-DLV_CONF_BUILD_DISABLE_EXAMPLES=0"
 )
 
 # Build type specific flags
@@ -258,7 +256,14 @@ endif()
 add_executable(${PROJECT_NAME} ${PROJECT_SRCS} ${NRF_SDK_SRCS})
 
 # Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE ${NRF_SDK_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${NRF_SDK_INCLUDE_DIRS}
+)
+
+# Add images directory to include path if it exists
+if(EXISTS ${IMAGES_PATH})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${IMAGES_PATH})
+endif()
 
 # Linker options
 target_link_options(${PROJECT_NAME} PRIVATE
