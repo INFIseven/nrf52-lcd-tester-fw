@@ -1,6 +1,11 @@
 /**
- * @file syscalls.c
- * @brief Minimal syscall implementations for newlib
+ ********************************************************************************
+ * @file    syscalls.c
+ * @brief   Minimal syscall implementations for newlib on bare-metal
+ *
+ * This is free and unencumbered software released into the public domain.
+ * For more information, please refer to <http://unlicense.org/>
+ ********************************************************************************
  */
 
 #include <sys/stat.h>
@@ -8,8 +13,11 @@
 #include <errno.h>
 
 /**
- * @brief Exit implementation
- * Called by exit() to terminate the program
+ * @brief Exit implementation for program termination
+ * @param status Exit status code (unused in bare-metal)
+ *
+ * Called by exit() to terminate the program. Disables interrupts and
+ * enters an infinite low-power loop.
  */
 void _exit(int status)
 {
@@ -25,7 +33,10 @@ void _exit(int status)
 }
 
 /**
- * @brief Kill process implementation (not used in bare-metal)
+ * @brief Kill process implementation (stub for bare-metal)
+ * @param pid Process ID (unused)
+ * @param sig Signal number (unused)
+ * @return Always returns -1 with errno set to EINVAL
  */
 int _kill(int pid, int sig)
 {
@@ -36,7 +47,8 @@ int _kill(int pid, int sig)
 }
 
 /**
- * @brief Get process ID (not used in bare-metal)
+ * @brief Get process ID (stub for bare-metal)
+ * @return Always returns 1 (single process system)
  */
 int _getpid(void)
 {

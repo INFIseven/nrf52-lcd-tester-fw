@@ -2,11 +2,10 @@
  ********************************************************************************
  * @file    spi.c
  * @author  Danijel Sipos
- * @date    10.09.2025
- * @brief   Implementation of spi
+ * @brief   SPI driver implementation for NRF52
  *
- * @par
- * COPYRIGHT NOTICE: (c) 2025 INFI7 d.o.o. . All rights reserved.
+ * This is free and unencumbered software released into the public domain.
+ * For more information, please refer to <http://unlicense.org/>
  ********************************************************************************
  */
 
@@ -21,6 +20,13 @@ NRF_LOG_MODULE_REGISTER();
 static const nrfx_spim_t SPI_INSTANCE  = NRFX_SPIM_INSTANCE(0);
 static volatile bool     spi_xfer_done = false;
 
+/**
+ * @brief SPI event handler callback
+ * @param p_event Pointer to SPI event structure (unused)
+ * @param p_context User context pointer (unused)
+ *
+ * Sets the transfer done flag when SPI transaction completes.
+ */
 static void
 hal_driver_spi_event_handler(nrfx_spim_evt_t const *p_event, void *p_context)
 {

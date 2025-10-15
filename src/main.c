@@ -1,3 +1,14 @@
+/**
+ ********************************************************************************
+ * @file    main.c
+ * @author  Danijel Sipos
+ * @brief   Main application entry point for NRF52 LCD Tester
+ *
+ * This is free and unencumbered software released into the public domain.
+ * For more information, please refer to <http://unlicense.org/>
+ ********************************************************************************
+ */
+
 #include "SEGGER_RTT.h"
 #include "pinout.h"
 #include "app_error.h"
@@ -34,6 +45,11 @@ static const nrfx_spim_config_t SPI_CONFIG = {
     .bit_order      = NRF_SPIM_BIT_ORDER_MSB_FIRST,
 };
 
+/**
+ * @brief Timer event handler for LVGL tick updates
+ * @param event_type Type of timer event that occurred
+ * @param p_context User context pointer (unused)
+ */
 static void
 LVGL_TIMER_event_handler(nrf_timer_event_t event_type, void *p_context)
 {
@@ -48,6 +64,12 @@ LVGL_TIMER_event_handler(nrf_timer_event_t event_type, void *p_context)
     }
 }
 
+/**
+ * @brief Initialize and configure the LVGL timer
+ *
+ * Sets up a hardware timer to trigger LVGL display updates at regular intervals
+ * defined by LVGL_LOOP_DELAY_MS.
+ */
 static void
 board_setup_timer(void)
 {
@@ -66,6 +88,11 @@ board_setup_timer(void)
     nrf_drv_timer_enable(&LVGL_TIMER);
 }
 
+/**
+ * @brief Configure GPIO pins for LCD control
+ *
+ * Initializes the Data/Command and Reset pins as outputs for LCD control.
+ */
 static void
 board_setup_gpios(void)
 {
@@ -73,6 +100,14 @@ board_setup_gpios(void)
     nrf_gpio_cfg_output(BOARD_LCD_RST_PIN);
 }
 
+/**
+ * @brief Main application entry point
+ *
+ * Initializes all peripherals (logging, PWM for backlight, SPI, timer, GPIOs, and display)
+ * then enters the main event loop processing display updates.
+ *
+ * @return Never returns (infinite loop)
+ */
 int
 main(void)
 {

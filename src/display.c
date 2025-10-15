@@ -2,11 +2,10 @@
  ********************************************************************************
  * @file    display.c
  * @author  Danijel Sipos
- * @date    15.10.2025
- * @brief   Implementation of display
+ * @brief   ST7789 LCD display driver implementation with LVGL
  *
- * @par
- * COPYRIGHT NOTICE: (c) 2025. All rights reserved.
+ * This is free and unencumbered software released into the public domain.
+ * For more information, please refer to <http://unlicense.org/>
  ********************************************************************************
  */
 
@@ -23,12 +22,20 @@
 
 #define BYTES_PER_PIXEL 2 // RGB565
 
-#define ST7789_RESET_CLEAR(gpio_pin) nrf_gpio_pin_clear(gpio_pin) // TODO: dani brief what needed for function to link
+#define ST7789_RESET_CLEAR(gpio_pin) nrf_gpio_pin_clear(gpio_pin)
 #define ST7789_RESET_SET(gpio_pin)   nrf_gpio_pin_set(gpio_pin)
 #define ST7789_DC_SET(gpio_pin)      nrf_gpio_pin_set(gpio_pin)
 #define ST7789_DC_CLEAR(gpio_pin)    nrf_gpio_pin_clear(gpio_pin)
 #define ST7789_WAIT(wait_ms)         nrf_delay_ms(wait_ms);
 
+/**
+ * @brief Send command to ST7789 display
+ * @param disp Display instance pointer (unused)
+ * @param cmd Pointer to command byte(s)
+ * @param cmd_size Size of command in bytes
+ * @param param Pointer to parameter byte(s)
+ * @param param_size Size of parameters in bytes
+ */
 static void
 display_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, const uint8_t *param, size_t param_size)
 {
@@ -44,6 +51,16 @@ display_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, const 
     }
 }
 
+/**
+ * @brief Send color data to ST7789 display
+ * @param disp Display instance pointer
+ * @param cmd Pointer to command byte(s)
+ * @param cmd_size Size of command in bytes
+ * @param param Pointer to color data buffer
+ * @param param_size Size of color data in bytes
+ *
+ * Sends color pixel data to the display and notifies LVGL when flush is complete.
+ */
 static void
 display_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size, uint8_t *param, size_t param_size)
 {
